@@ -1,0 +1,31 @@
+[
+  {
+    "label": "Gemma: ask about current file",
+    "command": "python",
+    "args": [
+      "scripts/agent_ask.py",
+      "--file",
+      "$ZED_FILE",
+      "$ZED_SELECTED_TEXT"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": true,
+    "reveal": "always"
+  },
+  {
+    "label": "Gemma: simplify selected code",
+    "command": "python",
+    "args": [
+      "scripts/agent_ask.py",
+      "--file",
+      "$ZED_FILE",
+      "--prompt",
+      "Simplify the following Python code while preserving its exact behaviour. Return only the simplified code, no explanations.",
+      "$ZED_SELECTED_TEXT"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": true,
+    "reveal": "always",
+    "shell": "system"
+  }
+]

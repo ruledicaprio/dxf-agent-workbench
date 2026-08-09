@@ -1,0 +1,27 @@
+@"
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Large engineering data (local only)
+.data/
+artifacts/*.png
+artifacts/*.svg
+artifacts/*.dxf
+artifacts/*.dwg
+
+# Benchmark corpus (optional: can be kept locally)
+benchmarks/
+corpus/
+"@ | Out-File -Encoding utf8 .gitignore
