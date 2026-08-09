@@ -134,10 +134,11 @@ def load_dxf_as_mesh(path: Path, max_faces: int | None = None) -> trimesh.Trimes
 
     # Fallback
     print("[*] Falling back to trimesh native loader...")
-    mesh = trimesh.load(str(path), force="mesh", process=False)
+    mesh = trimesh.load(str(path),
+        force="mesh",
+        process=False)
     print(f"[*] Loaded via trimesh: {len(mesh.faces):,} faces")
     return mesh
-
 
 # ============================================================
 # NORMALIZATION
@@ -302,16 +303,9 @@ def main():
     parser.add_argument("--out", type=Path, default=None, help="Output folder")
     parser.add_argument("--size", type=int, default=DEFAULT_SIZE, help="Image size in pixels")
     parser.add_argument("--max-edges", type=int, default=DEFAULT_MAX_EDGES)
-    parser.add_argument(
-        "--views",
-        type=str,
-        default="top,front,right",
-        help="Comma-separated views: top,front,right,iso",
-    )
+    parser.add_argument("--views", type=str, default="top,front,right", help="Comma-separated views: top,front,right,iso")
     parser.add_argument("--max-faces", type=int, default=None, help="Optional face limit when loading")
-
     args = parser.parse_args()
-
     input_path: Path = args.input
     if not input_path.exists():
         print(f"[ERROR] File not found: {input_path}")
