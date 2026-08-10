@@ -13,6 +13,14 @@ dependencies: numpy, matplotlib, trimesh, ezdxf, opencv-python
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub release](https://img.shields.io/github/v/release/ruledicaprio/dxf-agent-workbench)](https://github.com/ruledicaprio/dxf-agent-workbench/releases)
 
+## 🤖 For AI Agents
+
+This repository is **agent‑friendly**. See:
+- [AGENTS.md](AGENTS.md) for operational rules.
+- [CLAUDE.md](CLAUDE.md) for architectural decisions.
+- [llms.txt](llms.txt) for a concise index.
+- [llms-full.txt](llms-full.txt) for a comprehensive context dump.
+
 **Fast, robust orthographic rendering of large 3D DXF meshes** – built for engineering drawings, and high‑poly CAD models.
 
 - ✅ Handles **millions of faces** (tested with 2M+)
