@@ -1,18 +1,47 @@
-# dxf-agent-workbench — LLM Context Map
+# dxf-agent-workbench — Full Context for LLMs
 
-## Quick Links
-- **Entry point**: `dxf_agent.export.orthographic:main` in `src/dxf_agent/export/orthographic.py`
-- **DXF export helpers**: `src/dxf_agent/export/ortho_dxf.py`
-- **Agent rules**: [AGENTS.md](AGENTS.md)
-- **Architecture**: [CLAUDE.md](CLAUDE.md)
+## Purpose
+A CLI tool to generate orthographic (TOP/FRONT/RIGHT) PNG snapshots from large DXF meshes (millions of faces). Also exports DXF wireframe layouts and simplified outlines.
+
+## Entry Point
+- Main script: `src/dxf_agent/export/orthographic.py`
+- Function: `main()`
+- Command: `dxf-ortho [options] input.dxf`
 
 ## Core Modules
-| Module | Purpose | Location |
-|--------|---------|----------|
-| orthographic | CLI entry point, rendering pipeline | `src/dxf_agent/export/orthographic.py` |
-| ortho_dxf | DXF wireframe & outline export | `src/dxf_agent/export/ortho_dxf.py` |
+| Module | Purpose | Key Functions |
+|--------|---------|---------------|
+| `export/orthographic.py` | CLI, rendering pipeline | `load_dxf_as_mesh()`, `normalize_mesh()`, `extract_edges()`, `render_view()` |
+| `export/ortho_dxf.py` | DXF export helpers | `export_ortho_views_to_dxf()`, `extract_contour_from_png()`, `export_outline_dxf()` |
 
-## Key Commands
-- Install: `pip install -e .`
-- Run: `dxf-ortho input.dxf --size 3200 --out ./output`
-- Test import: `python -c "from dxf_agent.export.orthographic import main; print('OK')"`
+## Data Flow
+1. Load DXF (ezdxf → 3DFACEs → trimesh)
+2. Normalise (center, scale so max dimension ≈ 2.0)
+3. Extract unique edges (subsample if > `--max-edges`)
+4. Project edges to 2D for each view
+5. Render PNG (Matplotlib, dark theme)
+6. Optionally export DXF wireframe / outlines
+
+## Key Assumptions
+- DXF contains **3DFACE** entities (not polylines or solids).
+- Coordinates are in engineering units (mm/in) – tool preserves them.
+- Rendering is **deterministic** (random subsampling uses fixed seed only for DXF export).
+
+## Configuration Precedence
+- `--max-edges`: caps rendered edges in PNG.
+- `--max-dxf-edges` / `--dxf-max-mb`: caps edges in DXF export (second overrides first if set).
+- If DXF export is requested and edge count > limit, subsampling uses **fixed seed 42** for reproducible output.
+
+## Testing
+- Minimal test: `tests/test_import.py` (checks module loads).
+- Full test suite planned (contributions welcome).
+
+## Agent Rules (from AGENTS.md)
+- Never modify source DXF/DWG.
+- Rendering is a pure function of geometry.
+- All coordinates remain in original units.
+- Do not discard DXF entities silently – log unknowns.
+- Large assets (>1 MB) belong in `.data/`, not Git.
+
+## External Dependencies
+- `numpy`, `matplotlib`, `trimesh`, `ezdxf`, `opencv-python`
