@@ -1,25 +1,21 @@
-# AGENTS RUNBOOK
+# Agent Operational Rules
 
-## Local Runtime
+## When modifying geometry code
 
-- Agent Brain: Gemma 12B Q3_K_M running via llama.cpp + Vulkan on Iris GPU.
-- Server endpoint: `http://127.0.0.1:8080`
-- Client module: `src/dxf_agent/agent/local_brain.py`
-- Worktrees share the same brain instance.
+1. Read docs/architecture/overview.md and docs/architecture/coordinate-system.md (create if missing).  
+2. Identify the coordinate system you are working in.  
+3. If changing a transformation, ensure deterministic behaviour.  
+4. Run benchmark after change (python scripts/benchmark_corpus.py).  
+5. Compare benchmark JSON and generated images with baseline.
 
-## 🛡️ Code Hygiene & Autonomy
+## When adding a new algorithm
 
-When editing Python files, you are **encouraged** to make these safe, mechanical improvements without asking:
+- Place it in the appropriate src/dxf_agent/<module>/ folder.  
+- Provide a minimal CLI entrypoint in scripts/ that exercises the algorithm.  
+- Do **not** delete or refactor existing working algorithms until a new one has been benchmarked and approved.
 
-- Convert lists to tuples where a tuple is required (e.g., `add_axes((0,0,1,1))` instead of `[0,0,1,1]`).
-- Wrap `ndarray` segments with `list()` when passing to `LineCollection` or similar type‑sensitive functions.
-- Fix obvious import order (standard library → third‑party → local).
-- Remove unused imports.
-- Replace deprecated aliases (e.g., `np.float` → `float`).
+## Commits
 
-If a change is purely syntactic and does not alter behaviour, apply it directly and mention it in a brief note.
-
-**Only stop and ask** if:
-- The logic would change.
-- A library API would change.
-- You are unsure about a dependency.
+- Keep commits small and focused.  
+- Use conventional commit prefixes: eat:, ix:, chore:, docs:, perf:, 	est:.  
+- Never commit large binary files (DXF, PNG, SVG) to Git; use .gitignore.
