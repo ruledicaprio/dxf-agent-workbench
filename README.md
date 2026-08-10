@@ -13,6 +13,8 @@ dependencies: numpy, matplotlib, trimesh, ezdxf, opencv-python
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub release](https://img.shields.io/github/v/release/ruledicaprio/dxf-agent-workbench)](https://github.com/ruledicaprio/dxf-agent-workbench/releases)
 
+
+
 **Fast, robust orthographic rendering of large 3D DXF meshes** – built for engineering drawings, and high‑poly CAD models.
 
 - ✅ Handles **millions of faces** (tested with 2M+)
