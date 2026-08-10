@@ -25,3 +25,4 @@ artifacts/*.dwg
 benchmarks/
 corpus/
 "@ | Out-File -Encoding utf8 .gitignore
+corpus/
