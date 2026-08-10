@@ -12,9 +12,11 @@
 
 ---
 
-## Executive Summary
+## Summary
 
 The **DXF Agent Workbench** is a high-performance, robust orthographic rendering solution specifically engineered for large 3D DXF meshes. Designed primarily for engineering drawings and high-poly Computer-Aided Design (CAD) models, this application ensures rapid processing and precise visual output without compromising geometric integrity.
+
+![Orthographic views](examples/orthographic-views.jpg)
 
 ---
 
