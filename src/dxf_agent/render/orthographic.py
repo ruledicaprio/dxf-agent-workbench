@@ -42,7 +42,6 @@ except ImportError:
     print("[ERROR] trimesh is required: pip install trimesh")
     sys.exit(1)
 
-
 # ============================================================
 # CONFIG DEFAULTS
 # ============================================================
@@ -57,88 +56,112 @@ PADDING = 0.06                         # relative padding around the model
 
 
 # ============================================================
-# DXF → MESH (lightweight)
+# UTILITY: safe mesh cleaning
+# ============================================================
+
+def clean_mesh(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
+    """Safely clean a mesh, ignoring methods that may not exist in older versions."""
+    mesh.merge_vertices()
+    mesh.remove_unreferenced_vertices()
+    if hasattr(mesh, "remove_degenerate_faces"):
+        mesh.remove_degenerate_faces()
+    return mesh
+
+
+# ============================================================
+# DXF → MESH (robust loader using ezdxf)
 # ============================================================
 
 def load_dxf_as_mesh(path: Path, max_faces: int | None = None) -> trimesh.Trimesh:
     """
-    Load a DXF that consists mainly of 3DFACE entities.
-    Falls back to trimesh native loader if needed.
+    Load a DXF file, extracting 3DFACE entities and converting them to a trimesh.
+    Falls back to trimesh native loader if ezdxf is unavailable or readfile fails.
     """
-    print(f"[*] Loading {path.name} ...")
-
-    # Fast path for pure 3DFACE DXFs (most of your files)
-    vertices = []
-    faces = []
-    v_idx = 0
+    try:
+        import ezdxf
+        if not hasattr(ezdxf, "readfile"):
+            raise AttributeError("ezdxf.readfile not found")
+    except (ImportError, AttributeError) as e:
+        print(f"[*] ezdxf not usable ({e}); falling back to trimesh native loader")
+        return _load_with_trimesh(path, max_faces)
 
     try:
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
-            it = iter(f)
-            in_face = False
-            coords = {}
+        doc = ezdxf.readfile(str(path))
+        msp = doc.modelspace()
+        vertices = []
+        faces = []
+        face_count = 0
 
-            while True:
-                try:
-                    code = next(it).strip()
-                    val = next(it).strip()
-                except StopIteration:
-                    break
+        for entity in msp:
+            if max_faces is not None and face_count >= max_faces:
+                break
 
-                if code == "0":
-                    if in_face and len(coords) >= 9:
-                        # We have at least 3 points
-                        pts = []
-                        for i in range(4):
-                            x = float(coords.get(f"1{i}", 0.0))
-                            y = float(coords.get(f"2{i}", 0.0))
-                            z = float(coords.get(f"3{i}", 0.0))
-                            pts.append([x, y, z])
+            if entity.dxftype() == "3DFACE":
+                # Correct vertex access
+                p0 = entity.dxf.vtx0
+                p1 = entity.dxf.vtx1
+                p2 = entity.dxf.vtx2
+                p3 = entity.dxf.vtx3
+                pts = np.array([(p0.x, p0.y, p0.z),
+                                (p1.x, p1.y, p1.z),
+                                (p2.x, p2.y, p2.z),
+                                (p3.x, p3.y, p3.z)], dtype=np.float64)
+                # Check if last is duplicate
+                if np.allclose(pts[0], pts[3]):
+                    tri = pts[:3]
+                    base = len(vertices)
+                    vertices.extend(tri)
+                    faces.append([base, base+1, base+2])
+                    face_count += 1
+                else:
+                    # Two triangles
+                    tri1 = pts[[0,1,2]]
+                    tri2 = pts[[0,2,3]]
+                    base = len(vertices)
+                    vertices.extend(tri1)
+                    vertices.extend(tri2)
+                    faces.append([base, base+1, base+2])
+                    faces.append([base+3, base+4, base+5])
+                    face_count += 2
 
-                        # Add vertices
-                        base = len(vertices)
-                        vertices.extend(pts[:3])          # triangle
-                        faces.append([base, base + 1, base + 2])
+        if not vertices:
+            print("[*] No 3DFACE entities found; falling back to trimesh native loader")
+            return _load_with_trimesh(path, max_faces)
 
-                        # If 4th point is different → second triangle
-                        if not np.allclose(pts[2], pts[3], atol=1e-8):
-                            vertices.append(pts[3])
-                            faces.append([base, base + 2, base + 3])
+        vertices = np.array(vertices, dtype=np.float64)
+        faces = np.array(faces, dtype=np.int64)
 
-                        if max_faces and len(faces) >= max_faces:
-                            break
-
-                    coords.clear()
-                    in_face = (val == "3DFACE")
-                    continue
-
-                if in_face and code in {
-                    "10", "20", "30",
-                    "11", "21", "31",
-                    "12", "22", "32",
-                    "13", "23", "33",
-                }:
-                    coords[code] = val
-
-        if vertices:
-            mesh = trimesh.Trimesh(
-                vertices=np.array(vertices, dtype=np.float64),
-                faces=np.array(faces, dtype=np.int64),
-                process=False,
-            )
-            print(f"[*] Loaded via 3DFACE parser: {len(mesh.faces):,} faces")
-            return mesh
+        mesh = trimesh.Trimesh(vertices=vertices, faces=faces, process=False)
+        clean_mesh(mesh)
+        print(f"[*] Loaded {len(mesh.faces):,} faces from 3DFACE entities")
+        return mesh
 
     except Exception as e:
-        print(f"[WARN] Fast 3DFACE parser failed: {e}")
+        print(f"[WARN] ezdxf parser failed: {e}")
+        print("[*] Falling back to trimesh native loader")
+        return _load_with_trimesh(path, max_faces)
 
-    # Fallback
-    print("[*] Falling back to trimesh native loader...")
-    mesh = trimesh.load(str(path),
-        force="mesh",
-        process=False)
-    print(f"[*] Loaded via trimesh: {len(mesh.faces):,} faces")
-    return mesh
+
+def _load_with_trimesh(path: Path, max_faces: int | None = None) -> trimesh.Trimesh:
+    """
+    Fallback loader using trimesh's native DXF importer.
+    """
+    try:
+        mesh = trimesh.load(str(path), force="mesh", process=False)
+        if isinstance(mesh, trimesh.Scene):
+            # Combine all geometries into one mesh
+            meshes = [g for g in mesh.geometry.values() if isinstance(g, trimesh.Trimesh)]
+            if not meshes:
+                raise ValueError("No meshes found in scene")
+            mesh = trimesh.util.concatenate(meshes)
+        if not isinstance(mesh, trimesh.Trimesh):
+            raise TypeError(f"Loaded object is not a Trimesh: {type(mesh)}")
+        clean_mesh(mesh)
+        print(f"[*] Loaded {len(mesh.faces):,} faces via trimesh native loader")
+        return mesh
+    except Exception as e:
+        raise RuntimeError(f"Failed to load mesh: {e}") from e
+
 
 # ============================================================
 # NORMALIZATION
@@ -149,9 +172,7 @@ def normalize_mesh(mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, dict]:
     Center the mesh at origin and scale it so the largest dimension ≈ 2.0
     (comfortable size for orthographic rendering).
     """
-    # Clean a bit
-    mesh.merge_vertices()
-    mesh.remove_unreferenced_vertices()
+    clean_mesh(mesh)
 
     bounds = mesh.bounds
     center = (bounds[0] + bounds[1]) * 0.5
@@ -161,9 +182,7 @@ def normalize_mesh(mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, dict]:
     if max_dim < 1e-9:
         max_dim = 1.0
 
-    # Target size: largest side becomes ~2.0 units
     scale = 2.0 / max_dim
-
     mesh.vertices = (mesh.vertices - center) * scale
 
     info = {
@@ -190,9 +209,8 @@ def extract_edges(mesh: trimesh.Trimesh, max_edges: int) -> np.ndarray:
     Return unique edges as (N, 2, 3) array.
     If there are too many edges we randomly subsample (keeps visual density).
     """
-    # trimesh can give us unique edges
     edges = mesh.edges_unique
-    segments = mesh.vertices[edges]          # (N, 2, 3)
+    segments = mesh.vertices[edges]
 
     n = len(segments)
     print(f"[*] Unique edges: {n:,}")
@@ -214,13 +232,12 @@ def project_view(segments: np.ndarray, view: str) -> np.ndarray:
     view = view.lower()
 
     if view == "top":       # looking down -Z
-        return segments[:, :, [0, 1]]          # X, Y
+        return segments[:, :, [0, 1]]
     elif view == "front":   # looking along +Y
-        return segments[:, :, [0, 2]]          # X, Z
+        return segments[:, :, [0, 2]]
     elif view == "right":   # looking along +X
-        return segments[:, :, [1, 2]]          # Y, Z
+        return segments[:, :, [1, 2]]
     elif view == "iso":
-        # Simple isometric-ish
         x = segments[:, :, 0]
         y = segments[:, :, 1]
         z = segments[:, :, 2]
@@ -249,7 +266,6 @@ def render_view(
     ax.set_aspect("equal")
     ax.axis("off")
 
-    # Line collection is much faster than thousands of plot() calls
     lc = LineCollection(
         list(segments_2d),
         colors=FOREGROUND,
@@ -258,7 +274,6 @@ def render_view(
     )
     ax.add_collection(lc)
 
-    # Auto-fit with padding
     all_pts = segments_2d.reshape(-1, 2)
     mins = all_pts.min(axis=0)
     maxs = all_pts.max(axis=0)
@@ -269,7 +284,6 @@ def render_view(
     ax.set_xlim(mins[0] - pad[0], maxs[0] + pad[0])
     ax.set_ylim(mins[1] - pad[1], maxs[1] + pad[1])
 
-    # Small label
     ax.text(
         0.02, 0.98, view_name.upper(),
         transform=ax.transAxes,
@@ -304,8 +318,9 @@ def main():
     parser.add_argument("--size", type=int, default=DEFAULT_SIZE, help="Image size in pixels")
     parser.add_argument("--max-edges", type=int, default=DEFAULT_MAX_EDGES)
     parser.add_argument("--views", type=str, default="top,front,right", help="Comma-separated views: top,front,right,iso")
-    parser.add_argument("--max-faces", type=int, default=None, help="Optional face limit when loading")
+    parser.add_argument("--max-faces", type=int, default=None, help="Limit number of faces loaded to save memory")
     args = parser.parse_args()
+
     input_path: Path = args.input
     if not input_path.exists():
         print(f"[ERROR] File not found: {input_path}")
@@ -321,13 +336,13 @@ def main():
     # 1. Load
     mesh = load_dxf_as_mesh(input_path, max_faces=args.max_faces)
 
-    # 2. Normalize (center + scale)
+    # 2. Normalize
     mesh, norm_info = normalize_mesh(mesh)
 
     # 3. Extract edges
     segments = extract_edges(mesh, max_edges=args.max_edges)
 
-    # 4. Render each view
+    # 4. Render
     print(f"[*] Rendering {len(views)} view(s) at {args.size}px ...")
     for view in views:
         try:
@@ -363,6 +378,7 @@ def main():
     print(f"  Time          : {time.time() - t0:.1f}s")
     print("=" * 60)
 
+
 def render_dxf_view(
     filepath: str,
     view: str,
@@ -394,10 +410,10 @@ def render_dxf_view(
         "normalization": norm,
         "elapsed_sec": round(elapsed, 2),
     }
-    # optionally save a tiny meta file
     meta_path = out.with_suffix(".json")
     meta_path.write_text(json.dumps(meta, indent=2))
     return meta
+
 
 if __name__ == "__main__":
     main()
