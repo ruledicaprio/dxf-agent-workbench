@@ -2,7 +2,7 @@
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub release](https://img.shields.io/github/v/release/your-username/dxf-agent-workbench)](https://github.com/your-username/dxf-agent-workbench/releases)
+[![GitHub release](https://img.shields.io/github/v/release/ruledicaprio/dxf-agent-workbench)](https://github.com/ruledicaprio/dxf-agent-workbench/releases)
 
 **Fast, robust orthographic rendering of large 3D DXF meshes** – built for engineering drawings, gensets, and high‑poly CAD models.
 
@@ -27,7 +27,7 @@ dxf-ortho model.dxf --size 3200 --out ./preview
 dxf-ortho model.dxf --dxf-out layout.dxf
 
 # Export simplified outlines (closed polylines)
-dxf-ortho model.dxf --dxf-outline outlines.dxf```
+dxf-ortho model.dxf --dxf-outline outlines.dxf
 
 ---
 
@@ -66,6 +66,7 @@ graph LR
 ## 📁 Project Structure
 
 ```
+dxf-agent-workbench/
 ├── src/dxf_agent/export/
 │   ├── orthographic.py   # main CLI
 │   └── ortho_dxf.py      # DXF export helpers
