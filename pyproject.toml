@@ -7,7 +7,7 @@ name = "dxf-agent-workbench"
 version = "0.1.0"
 description = "Orthographic renderer for large DXF meshes"
 readme = "README.md"
-authors = [{name = "Your Name", email = "you@example.com"}]
+authors = [{name = "Rusmir", email = "ruledicaprio@example.com"}]
 license = {text = "MIT"}
 requires-python = ">=3.9"
 dependencies = [
@@ -20,3 +20,6 @@ dependencies = [
 
 [project.scripts]
 dxf-ortho = "dxf_agent.export.orthographic:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
