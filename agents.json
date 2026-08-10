@@ -1,0 +1,10 @@
+{
+  "agent": {
+    "name": "dxf-agent-workbench",
+    "version": "0.1.0",
+    "description": "Orthographic DXF renderer",
+    "capabilities": ["dxf-to-png", "dxf-to-dxf-wireframe", "dxf-to-outline"],
+    "entry": "dxf_agent.export.orthographic:main",
+    "license": "MIT"
+  }
+}
