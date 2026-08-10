@@ -28,7 +28,7 @@ dxf-ortho model.dxf --dxf-out layout.dxf
 
 # Export simplified outlines (closed polylines)
 dxf-ortho model.dxf --dxf-outline outlines.dxf
-
+```
 ---
 
 ## 📊 Pipeline
