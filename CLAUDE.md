@@ -1,5 +1,9 @@
-@"
 # DXF Agent Workbench – Project Memory
+
+## For AI Agents
+- Start with [AGENTS.md](AGENTS.md) for operational rules.
+- See [CLAUDE.md](CLAUDE.md) for architecture decisions.
+- Entry point: `dxf_agent.export.orthographic:main`.
 
 ## Core Constraints
 - Never modify source engineering files (DXF/DWG).
@@ -21,4 +25,3 @@ claud
 
 ## Project Structure
 See `docs/architecture/overview.md` for rationale.
-"@ | Out-File -Encoding utf8 CLAUDE.md
