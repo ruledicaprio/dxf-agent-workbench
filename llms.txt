@@ -1,0 +1,18 @@
+# dxf-agent-workbench — LLM Context Map
+
+## Quick Links
+- **Entry point**: `dxf_agent.export.orthographic:main` in `src/dxf_agent/export/orthographic.py`
+- **DXF export helpers**: `src/dxf_agent/export/ortho_dxf.py`
+- **Agent rules**: [AGENTS.md](AGENTS.md)
+- **Architecture**: [CLAUDE.md](CLAUDE.md)
+
+## Core Modules
+| Module | Purpose | Location |
+|--------|---------|----------|
+| orthographic | CLI entry point, rendering pipeline | `src/dxf_agent/export/orthographic.py` |
+| ortho_dxf | DXF wireframe & outline export | `src/dxf_agent/export/ortho_dxf.py` |
+
+## Key Commands
+- Install: `pip install -e .`
+- Run: `dxf-ortho input.dxf --size 3200 --out ./output`
+- Test import: `python -c "from dxf_agent.export.orthographic import main; print('OK')"`
