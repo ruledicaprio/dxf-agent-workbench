@@ -1,7 +1,7 @@
 <div align="center">
 
 # DXF Agent Workbench
-### Advanced Orthographic Renderer for Large 3D DXF Meshes
+### Agentic Orthographic Renderer for complex 3D DXF Meshes
 
 ![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
@@ -14,7 +14,7 @@
 
 ## Summary
 
-The **DXF Agent Workbench** is a high-performance, robust orthographic rendering solution specifically engineered for large 3D DXF meshes. Designed primarily for engineering drawings and high-poly Computer-Aided Design (CAD) models, this application ensures rapid processing and precise visual output without compromising geometric integrity.
+The **DXF Agent Workbench** is an agentic-oriented, high-performance, robust orthographic rendering solution specifically engineered for large 3D DXF meshes. Designed primarily for engineering drawings and high-poly Computer-Aided Design (CAD) models, this application ensures rapid processing and precise visual output without compromising geometric integrity.
 
 ![Orthographic views](https://raw.githubusercontent.com/ruledicaprio/dxf-agent-workbench/main/examples/orthographic-views.jpg)
 
