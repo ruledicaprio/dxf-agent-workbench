@@ -3,29 +3,22 @@ from __future__ import annotations
 from pathlib import Path
 import numpy as np
 import ezdxf
+import cv2  # <-- added
+
 
 def export_ortho_views_to_dxf(
     views_segments: dict[str, np.ndarray],  # key: view name, value: (N,2,2) float
     out_path: Path,
-    spacing: float = 3.0,                  # spacing between views in model units
+    spacing: float = 3.0,
 ) -> None:
-    """Write three orthographic 2D edge sets to a DXF, side-by-side.
-
-    views_segments: {'top': ..., 'front': ..., 'right': ...}
-    """
+    """Write three orthographic 2D edge sets to a DXF, side-by-side."""
     doc = ezdxf.new(dxfversion="R2010")
     msp = doc.modelspace()
 
-    # Pre-calculate offsets so views don't overlap
-    # Determine bounding boxes of each view
     bboxes = {}
     for vname, segs in views_segments.items():
         pts = segs.reshape(-1, 2)
         bboxes[vname] = (pts.min(axis=0), pts.max(axis=0))
-
-    # Layout: Top at origin, Front to the right, Right below Top
-    # We'll offset each view so that its lower-left corner sits at the origin
-    # after accounting for spacing.
 
     def offset_bbox(bb_min, bb_max):
         return bb_max - bb_min
@@ -34,19 +27,17 @@ def export_ortho_views_to_dxf(
     front_size = offset_bbox(*bboxes['front'])
     right_size = offset_bbox(*bboxes['right'])
 
-    # Offsets (lower-left corner) for each view
     top_offset = np.zeros(2)
     front_offset = np.array([top_size[0] + spacing, 0.0])
     right_offset = np.array([0.0, top_size[1] + spacing])
 
-    # Also shift by the min of each view so they start at the offset
     top_min = bboxes['top'][0]
     front_min = bboxes['front'][0]
     right_min = bboxes['right'][0]
 
     def write_lines(segments, offset, view_min, layer_name, color_index=7):
         layer = doc.layers.add(name=layer_name)
-        layer.color = color_index  # white/black by default
+        layer.color = color_index
         for seg in segments:
             start = seg[0] - view_min + offset
             end = seg[1] - view_min + offset
@@ -56,9 +47,8 @@ def export_ortho_views_to_dxf(
     write_lines(views_segments['front'], front_offset, front_min, "FRONT")
     write_lines(views_segments['right'], right_offset, right_min, "RIGHT")
 
-    # Add view labels
     label_height = 0.5
-    label_offset = 0.8          # <-- increase from 0.3 to 0.8
+    label_offset = 1.0
     for vname, off, bb_min in [
         ("TOP", top_offset, top_min),
         ("FRONT", front_offset, front_min),
@@ -66,12 +56,62 @@ def export_ortho_views_to_dxf(
     ]:
         text = msp.add_text(
             vname,
-            dxfattribs={
-                "layer": "LABELS",
-                "height": label_height,
-            },
+            dxfattribs={"layer": "LABELS", "height": label_height},
         )
         text.dxf.insert = (off[0], off[1] - label_offset)
 
     doc.saveas(str(out_path))
     print(f"[*] DXF exported: {out_path}")
+
+
+def extract_contour_from_png(png_path: Path, epsilon_factor: float = 0.001) -> np.ndarray:
+    """Extract the largest outer contour from a rendered ortho PNG.
+    Returns (N,2) pixel‑coordinates of the simplified contour.
+    """
+    img = cv2.imread(str(png_path), cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        raise FileNotFoundError(f"Could not read {png_path}")
+
+    _, thresh = cv2.threshold(img, 128, 255, cv2.THRESH_BINARY_INV)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        raise ValueError("No contour found in image")
+
+    largest = max(contours, key=cv2.contourArea)
+    epsilon = epsilon_factor * cv2.arcLength(largest, True)
+    approx = cv2.approxPolyDP(largest, epsilon, True)
+    return approx[:, 0, :].astype(np.float64)   # (N,2)
+
+
+def export_outline_dxf(
+    view_contours: dict[str, np.ndarray],
+    view_limits: dict[str, tuple[tuple[float, float], tuple[float, float]]],
+    img_size: int,
+    view_offsets: dict[str, tuple[float, float]],
+    out_path: Path,
+) -> None:
+    """Write a DXF with one closed LWPOLYLINE per view."""
+    doc = ezdxf.new(dxfversion="R2010")
+    msp = doc.modelspace()
+
+    for view, contour_px in view_contours.items():
+        (xmin, xmax), (ymin, ymax) = view_limits[view]
+        x_model = xmin + (contour_px[:, 0] / (img_size - 1)) * (xmax - xmin)
+        y_model = ymin + ((img_size - 1 - contour_px[:, 1]) / (img_size - 1)) * (ymax - ymin)
+        pts_model = np.column_stack((x_model, y_model))
+
+        offset = view_offsets[view]
+        pts_model[:, 0] += offset[0]
+        pts_model[:, 1] += offset[1]
+
+        pts_closed = np.vstack([pts_model, pts_model[0]])
+        msp.add_lwpolyline(pts_closed, dxfattribs={"layer": f"{view.upper()}_OUTLINE"})
+
+    label_height = 0.5
+    label_offset = 1.0
+    for v, off in view_offsets.items():
+        text = msp.add_text(v.upper(), dxfattribs={"layer": "LABELS", "height": label_height})
+        text.dxf.insert = (off[0], off[1] - label_offset)
+
+    doc.saveas(str(out_path))
+    print(f"[*] Outline DXF exported: {out_path}")

@@ -1,0 +1,14 @@
+{
+  "top": {
+    "time_sec": 19.8
+  },
+  "front": {
+    "time_sec": 17.79
+  },
+  "right": {
+    "time_sec": 17.94
+  },
+  "total_time_sec": 118.79,
+  "faces": 1996727,
+  "edges": 1991425
+}

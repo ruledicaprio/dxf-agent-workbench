@@ -1,16 +1,22 @@
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta:__legacy__"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "dxf-agent-workbench"
 version = "0.1.0"
-description = "Agent-oriented CAD drawing processing"
+description = "Orthographic renderer for large DXF meshes"
 readme = "README.md"
-requires-python = ">=3.10"
+authors = [{name = "Your Name", email = "you@example.com"}]
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "trimesh>=3.23.0",
+    "ezdxf>=1.1.0",
+    "opencv-python>=4.5.0",
+]
 
 [project.scripts]
-dxf-agent = "dxf_agent.cli:main"
-
-[tool.setuptools.packages.find]
-where = ["src"]
+dxf-ortho = "dxf_agent.export.orthographic:main"
