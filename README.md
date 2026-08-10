@@ -1,13 +1,93 @@
-@"
-# dxf-agent-workbench
+# 🏗️ DXF Agent Workbench – Orthographic Renderer
 
-Agent-addressable engineering drawing / CAD processing workbench.
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/v/release/your-username/dxf-agent-workbench)](https://github.com/your-username/dxf-agent-workbench/releases)
 
-**Status**: 🚧 repository bootstrapped, migration in progress.
+**Fast, robust orthographic rendering of large 3D DXF meshes** – built for engineering drawings, gensets, and high‑poly CAD models.
 
-## Principles
-1. Preserve engineering coordinates.
-2. Rendering is derived from geometry, never the other way.
-3. Large fixtures live outside normal Git history.
-4. Every transformation must be deterministic.
-"@ | Out-File -Encoding utf8 README.md
+- ✅ Handles **millions of faces** (tested with 2M+)
+- ✅ Automatic centering & scaling
+- ✅ Clean TOP / FRONT / RIGHT views (plus isometric optional)
+- ✅ PNG output at any resolution (default 3200 px)
+- ✅ Optional DXF wireframe and outline exports
+
+---
+
+## 🚀 Quickstart
+
+```bash
+# Install from GitHub
+pip install git+https://github.com/ruledicaprio/dxf-agent-workbench.git
+
+# Render all three views (PNG only)
+dxf-ortho model.dxf --size 3200 --out ./preview
+
+# Also export a DXF wireframe layout
+dxf-ortho model.dxf --dxf-out layout.dxf
+
+# Export simplified outlines (closed polylines)
+dxf-ortho model.dxf --dxf-outline outlines.dxf```
+
+---
+
+## 📊 Pipeline
+
+```mermaid
+graph LR
+    A[DXF File] --> B[Load with ezdxf / trimesh]
+    B --> C[Normalize: center + scale]
+    C --> D[Extract unique edges]
+    D --> E[Project to TOP/FRONT/RIGHT]
+    E --> F[Render PNGs]
+    E --> G[Export DXF wireframe]
+    E --> H[Export outline polylines]
+    F & G & H --> I[Output folder]
+```
+
+---
+
+## 🛠️ Options
+
+| Argument | Description |
+|----------|-------------|
+| input | Path to the DXF file |
+| --out | Output folder (default: <input>_ORTHO) |
+| --size | Image size in pixels (default: 3200) |
+| --views | Comma‑separated list: top,front,right,iso (default: all except iso) |
+| --max-edges | Cap the number of rendered edges (default: 8,000,000) |
+| --max-faces | Limit loaded faces for memory (e.g., --max-faces 1000000) |
+| --dxf-out | Save a DXF with all projected views side‑by‑side |
+| --dxf-outline | Save a DXF with simplified outer contours (closed polylines) |
+| --dxf-max-mb | Target DXF file size (overrides edge count) |
+
+---
+
+## 📁 Project Structure
+
+```
+├── src/dxf_agent/export/
+│   ├── orthographic.py   # main CLI
+│   └── ortho_dxf.py      # DXF export helpers
+├── corpus/               # example DXF files
+├── docs/                 # architecture & research
+└── tests/                # unit / integration tests
+```
+
+---
+
+## 🤝 Contributing
+
+Please read AGENTS.md and CLAUDE.md for operational rules.
+
+Keep commits small and conventional (feat:, fix:, docs:).
+
+Run pytest before committing.
+
+Never commit large binaries – use .data/ or .gitignore.
+
+---
+
+## 📄 License
+
+MIT © 2026 Rusmir Skopljak

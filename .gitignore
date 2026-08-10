@@ -26,3 +26,11 @@ benchmarks/
 corpus/
 "@ | Out-File -Encoding utf8 .gitignore
 corpus/
+output/
+artifacts/
+benchmark_results/
+.venv/
+output/
+artifacts/
+benchmark_results/
+*.dxf
