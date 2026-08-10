@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DXF Agent Workbench</title>
+  <meta name="description" content="Agentic high-performance orthographic renderer for large 3D DXF meshes." />
+  <style>
+    :root {
+      --bg: #0c0e12;
+      --surface: #14171e;
+      --border: #1e2430;
+      --text: #e6eaf0;
+      --muted: #8b95a8;
+      --accent: #5b8def;
+      --accent-dim: #3a5f9e;
+      --green: #3dd68c;
+      --mono: "SF Mono", "Fira Code", "Cascadia Code", "JetBrains Mono", ui-monospace, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.55;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 4.5rem 1.5rem 5rem;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 3.25rem;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 2rem;
+    }
+
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      border: 1.5px solid var(--accent);
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    .logo-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    h1 {
+      font-size: clamp(1.85rem, 4.5vw, 2.35rem);
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      line-height: 1.2;
+      margin-bottom: 0.85rem;
+    }
+
+    .tagline {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 34rem;
+      margin-bottom: 1.75rem;
+    }
+
+    /* Badges */
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 0.28rem 0.55rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      letter-spacing: 0.01em;
+    }
+
+    .badge strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .badge.pass strong { color: var(--green); }
+    .badge.version strong { color: var(--accent); }
+
+    /* Main content */
+    section {
+      margin-bottom: 2.75rem;
+    }
+
+    h2 {
+      font-size: 0.78rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.9rem;
+    }
+
+    p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 38rem;
+    }
+
+    p + p { margin-top: 0.7rem; }
+
+    /* Capabilities */
+    .caps {
+      list-style: none;
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .caps li {
+      display: flex;
+      gap: 0.7rem;
+      font-size: 0.92rem;
+      color: var(--text);
+    }
+
+    .caps li::before {
+      content: "–";
+      color: var(--accent-dim);
+      flex-shrink: 0;
+    }
+
+    .caps li span {
+      color: var(--muted);
+    }
+
+    /* Code / install */
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .code-body {
+      padding: 1rem 1.1rem;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.65;
+      overflow-x: auto;
+      color: #c8d0dc;
+    }
+
+    .code-body .comment { color: #5c677a; }
+    .code-body .cmd { color: var(--accent); }
+    .code-body .flag { color: #9eb6e0; }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .copy-btn:hover {
+      color: var(--text);
+      border-color: #2a3344;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 3.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 1.75rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 540px) {
+      .container { padding: 3rem 1.15rem 4rem; }
+      h1 { font-size: 1.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-row">
+        <div class="logo-mark">DX</div>
+        <span class="logo-text">DXF Agent Workbench</span>
+      </div>
+
+      <h1>Orthographic renderer for large 3D DXF meshes</h1>
+      <p class="tagline">
+        Deterministic TOP · FRONT · RIGHT projections with automatic centering and scaling.
+        Built for engineering drawings and high-poly CAD models.
+      </p>
+
+      <div class="badges">
+        <span class="badge">python <strong>≥3.9</strong></span>
+        <span class="badge pass">status <strong>ready</strong></span>
+        <span class="badge">license <strong>MIT</strong></span>
+        <span class="badge version">version <strong>v0.1.0</strong></span>
+      </div>
+    </header>
+
+    <section>
+      <h2>What it does</h2>
+      <ul class="caps">
+        <li>Loads large DXF meshes (tested beyond 2 M faces)</li>
+        <li>Centers and normalizes geometry automatically</li>
+        <li>Renders clean orthographic views (TOP / FRONT / RIGHT + optional ISO)</li>
+        <li>Exports high-resolution PNG (default 3200 px)</li>
+        <li>Optional wireframe or outline DXF export</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Install</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span>shell</span>
+          <button class="copy-btn" onclick="copyInstall()">copy</button>
+        </div>
+        <div class="code-body" id="install-cmd">
+<span class="comment"># clone &amp; install</span>
+git clone https://github.com/ruledicaprio/dxf-agent-workbench.git
+cd dxf-agent-workbench
+python -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -e .
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Usage</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span>shell</span>
+          <button class="copy-btn" onclick="copyUsage()">copy</button>
+        </div>
+        <div class="code-body" id="usage-cmd">
+<span class="cmd">dxf-ortho</span> model.dxf <span class="flag">--size</span> 3200 <span class="flag">--views</span> top,front,right
+        </div>
+      </div>
+      <p style="margin-top: 0.9rem;">
+        Output is written to a folder next to the input file.
+        See <code style="font-family:var(--mono);font-size:0.85em;color:var(--text)">dxf-ortho --help</code> for all options.
+      </p>
+    </section>
+
+    <section>
+      <h2>Stack</h2>
+      <p>
+        Python · ezdxf · trimesh · numpy · matplotlib · OpenCV
+      </p>
+    </section>
+
+    <footer>
+      <a href="https://github.com/ruledicaprio/dxf-agent-workbench">GitHub</a>
+      <a href="https://github.com/ruledicaprio/dxf-agent-workbench/releases/tag/v0.1.0">v0.1.0</a>
+      <a href="https://github.com/ruledicaprio/dxf-agent-workbench/blob/main/README.md">README</a>
+      <span>MIT License</span>
+    </footer>
+  </div>
+
+  <script>
+    function copyText(id) {
+      const el = document.getElementById(id);
+      const text = el.innerText.replace(/\u00a0/g, ' ').trim();
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = el.closest('.code-block').querySelector('.copy-btn');
+        const prev = btn.textContent;
+        btn.textContent = 'copied';
+        setTimeout(() => btn.textContent = prev, 1400);
+      });
+    }
+    function copyInstall() { copyText('install-cmd'); }
+    function copyUsage() { copyText('usage-cmd'); }
+  </script>
+</body>
+</html>
