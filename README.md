@@ -7,8 +7,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Performance](https://img.shields.io/badge/Performance-Tested_2M%2B_Faces-orange.svg)
 ![Status](https://img.shields.io/badge/Status-Production_Ready-success.svg)
-
-
+</div>
 
 **Fast, agentic_friendly, robust orthographic rendering of large 3D DXF meshes** – built for engineering drawings, and high‑poly CAD models.
 
@@ -17,7 +16,7 @@
 - ✅ Clean TOP / FRONT / RIGHT views (plus isometric optional)
 - ✅ PNG output at any resolution (default 3200 px)
 - ✅ Optional DXF wireframe and outline exports
-</div>
+
 
 ---
 
@@ -25,7 +24,7 @@
 
 The **DXF Agent Workbench** is an agentic-oriented, high-performance, robust orthographic rendering solution specifically engineered for large 3D DXF meshes. Designed primarily for engineering drawings and high-poly Computer-Aided Design (CAD) models, this application ensures rapid processing and precise visual output without compromising geometric integrity.
 
-![Orthographic views](https://raw.githubusercontent.com/ruledicaprio/dxf-agent-workbench/main/examples/orthographic-views.jpg)
+![Orthographic views](https://raw.githubusercontent.com/ruledicaprio/dxf-agent-workbench/main/examples/front_preview.png)
 
 ---
 
@@ -88,15 +87,15 @@ dxf-ortho examples/FG_Wilson_P_22-6-model.dxf --size 3200 --out examples/ --png-
 ## Gallery
 
 <p align="center">
-  <img src="examples/top.png" width="600" alt="TOP view">
+  <img src="examples/top_preview.png" width="600" alt="TOP view">
   <br><em>TOP view</em>
 </p>
 <p align="center">
-  <img src="examples/front.png" width="600" alt="FRONT view">
+  <img src="examples/front_preview.png" width="600" alt="FRONT view">
   <br><em>FRONT view</em>
 </p>
 <p align="center">
-  <img src="examples/right.png" width="600" alt="RIGHT view">
+  <img src="examples/right_preview.png" width="600" alt="RIGHT view">
   <br><em>RIGHT view</em>
 </p>
 
