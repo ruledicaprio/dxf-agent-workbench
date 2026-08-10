@@ -1,4 +1,13 @@
-# 🏗️ DXF Agent Workbench – Orthographic Renderer
+---
+name: dxf-agent-workbench
+version: 0.1.0
+description: Orthographic renderer for large DXF meshes
+entry_point: dxf_agent.export.orthographic:main
+language: python
+dependencies: numpy, matplotlib, trimesh, ezdxf, opencv-python
+---
+
+# DXF Agent Workbench – Orthographic Renderer
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -14,7 +23,7 @@
 
 ---
 
-## 🚀 Quickstart
+## Quickstart
 
 ```bash
 # Install from GitHub
@@ -31,7 +40,7 @@ dxf-ortho model.dxf --dxf-outline outlines.dxf
 ```
 ---
 
-## 📊 Pipeline
+## Pipeline
 
 ```mermaid
 graph LR
@@ -47,7 +56,7 @@ graph LR
 
 ---
 
-## 🛠️ Options
+## Options
 
 | Argument | Description |
 |----------|-------------|
@@ -63,7 +72,7 @@ graph LR
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 dxf-agent-workbench/
@@ -77,7 +86,7 @@ dxf-agent-workbench/
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Please read AGENTS.md and CLAUDE.md for operational rules.
 
@@ -89,6 +98,6 @@ Never commit large binaries – use .data/ or .gitignore.
 
 ---
 
-## 📄 License
+##  License
 
 MIT © 2026 Rusmir Skopljak
