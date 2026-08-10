@@ -1,0 +1,8 @@
+{
+  "project_name": "dxf-agent-workbench",
+  "entrypoints": {
+    "render": "python src/dxf_agent/render/orthographic.py",
+    "benchmark": "python scripts/benchmark_corpus.py"
+  },
+  "ignored_paths": ["corpus/", "benchmark_results/", "artifacts/", ".data/"]
+}
