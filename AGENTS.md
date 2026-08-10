@@ -1,5 +1,12 @@
 # Agent Operational Rules
 
+## Agent Quick Start
+
+1. Install: `pip install -e .`
+2. Entry point: `dxf_agent.export.orthographic:main`
+3. Run a test: `dxf-ortho --help`
+4. Core modules: `export/orthographic.py` (CLI), `export/ortho_dxf.py` (DXF helpers)
+
 ## When modifying geometry code
 
 1. Read docs/architecture/overview.md and docs/architecture/coordinate-system.md (create if missing).  
