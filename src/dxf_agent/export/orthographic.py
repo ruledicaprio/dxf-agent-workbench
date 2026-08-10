@@ -19,17 +19,16 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
-import os
 import sys
 import time
-import cv2
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
 try:
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.collections import LineCollection
@@ -48,30 +47,32 @@ except ImportError:
 # ============================================================
 
 DEFAULT_SIZE = 3200
-DEFAULT_MAX_EDGES = 8_000_000          # much higher than before
+DEFAULT_MAX_EDGES = 8_000_000  # much higher than before
 DEFAULT_VIEWS = ["top", "front", "right"]
 LINE_WIDTH = 0.35
 BACKGROUND = "#0f1419"
 FOREGROUND = "#e8eef5"
-PADDING = 0.06                         # relative padding around the model
+PADDING = 0.06  # relative padding around the model
 
 
 # ============================================================
 # UTILITY: safe mesh cleaning
 # ============================================================
 
+
 def clean_mesh(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
     """Safely clean a mesh, ignoring methods that may not exist in older versions."""
     mesh.merge_vertices()
     mesh.remove_unreferenced_vertices()
     if hasattr(mesh, "remove_degenerate_faces"):
-        mesh.remove_degenerate_faces()
+        mesh.remove_degenerate_faces()  # type: ignore
     return mesh
 
 
 # ============================================================
 # DXF → MESH (robust loader using ezdxf)
 # ============================================================
+
 
 def load_dxf_as_mesh(path: Path, max_faces: int | None = None) -> trimesh.Trimesh:
     """
@@ -80,6 +81,7 @@ def load_dxf_as_mesh(path: Path, max_faces: int | None = None) -> trimesh.Trimes
     """
     try:
         import ezdxf
+
         if not hasattr(ezdxf, "readfile"):
             raise AttributeError("ezdxf.readfile not found")
     except (ImportError, AttributeError) as e:
@@ -103,26 +105,31 @@ def load_dxf_as_mesh(path: Path, max_faces: int | None = None) -> trimesh.Trimes
                 p1 = entity.dxf.vtx1
                 p2 = entity.dxf.vtx2
                 p3 = entity.dxf.vtx3
-                pts = np.array([(p0.x, p0.y, p0.z),
-                                (p1.x, p1.y, p1.z),
-                                (p2.x, p2.y, p2.z),
-                                (p3.x, p3.y, p3.z)], dtype=np.float64)
+                pts = np.array(
+                    [
+                        (p0.x, p0.y, p0.z),
+                        (p1.x, p1.y, p1.z),
+                        (p2.x, p2.y, p2.z),
+                        (p3.x, p3.y, p3.z),
+                    ],
+                    dtype=np.float64,
+                )
                 # Check if last is duplicate
                 if np.allclose(pts[0], pts[3]):
                     tri = pts[:3]
                     base = len(vertices)
                     vertices.extend(tri)
-                    faces.append([base, base+1, base+2])
+                    faces.append([base, base + 1, base + 2])
                     face_count += 1
                 else:
                     # Two triangles
-                    tri1 = pts[[0,1,2]]
-                    tri2 = pts[[0,2,3]]
+                    tri1 = pts[[0, 1, 2]]
+                    tri2 = pts[[0, 2, 3]]
                     base = len(vertices)
                     vertices.extend(tri1)
                     vertices.extend(tri2)
-                    faces.append([base, base+1, base+2])
-                    faces.append([base+3, base+4, base+5])
+                    faces.append([base, base + 1, base + 2])
+                    faces.append([base + 3, base + 4, base + 5])
                     face_count += 2
 
         if not vertices:
@@ -151,7 +158,9 @@ def _load_with_trimesh(path: Path, max_faces: int | None = None) -> trimesh.Trim
         mesh = trimesh.load(str(path), force="mesh", process=False)
         if isinstance(mesh, trimesh.Scene):
             # Combine all geometries into one mesh
-            meshes = [g for g in mesh.geometry.values() if isinstance(g, trimesh.Trimesh)]
+            meshes = [
+                g for g in mesh.geometry.values() if isinstance(g, trimesh.Trimesh)
+            ]
             if not meshes:
                 raise ValueError("No meshes found in scene")
             mesh = trimesh.util.concatenate(meshes)
@@ -168,17 +177,18 @@ def _load_with_trimesh(path: Path, max_faces: int | None = None) -> trimesh.Trim
 # NORMALIZATION
 # ============================================================
 
-def normalize_mesh(mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, dict]:
+
+def normalize_mesh(mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, dict[str, Any]]:
     """
     Center the mesh at origin and scale it so the largest dimension ≈ 2.0
     (comfortable size for orthographic rendering).
     """
-    clean_mesh(mesh)
+    _ = clean_mesh(mesh)  # in‑place modification; ignore return
 
     bounds = mesh.bounds
     center = (bounds[0] + bounds[1]) * 0.5
     extents = bounds[1] - bounds[0]
-    max_dim = float(np.max(extents))
+    max_dim = float(np.max(extents))  # type: ignore
 
     if max_dim < 1e-9:
         max_dim = 1.0
@@ -205,6 +215,7 @@ def normalize_mesh(mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, dict]:
 # EDGE EXTRACTION (with limit)
 # ============================================================
 
+
 def extract_edges(mesh: trimesh.Trimesh, max_edges: int) -> np.ndarray:
     """
     Return unique edges as (N, 2, 3) array.
@@ -228,15 +239,16 @@ def extract_edges(mesh: trimesh.Trimesh, max_edges: int) -> np.ndarray:
 # RENDERING
 # ============================================================
 
+
 def project_view(segments: np.ndarray, view: str) -> np.ndarray:
     """Project 3D edge segments into 2D according to the view."""
     view = view.lower()
 
-    if view == "top":       # looking down -Z
+    if view == "top":  # looking down -Z
         return segments[:, :, [0, 1]]
-    elif view == "front":   # looking along +Y
+    elif view == "front":  # looking along +Y
         return segments[:, :, [0, 2]]
-    elif view == "right":   # looking along +X
+    elif view == "right":  # looking along +X
         return segments[:, :, [1, 2]]
     elif view == "iso":
         x = segments[:, :, 0]
@@ -252,9 +264,11 @@ def project_view(segments: np.ndarray, view: str) -> np.ndarray:
 def render_view(
     segments_2d: np.ndarray,
     view_name: str,
-    out_path: Path,
+    out_dir: Path,
     image_size: int = 3200,
     line_width: float = LINE_WIDTH,
+    compress_level: int = 6,
+    suffix: str = "",
 ):
     """Render one orthographic view to PNG."""
     fig = plt.figure(
@@ -286,7 +300,9 @@ def render_view(
     ax.set_ylim(mins[1] - pad[1], maxs[1] + pad[1])
 
     ax.text(
-        0.02, 0.98, view_name.upper(),
+        0.02,
+        0.98,
+        view_name.upper(),
         transform=ax.transAxes,
         color="#8ab4f8",
         fontsize=14,
@@ -296,11 +312,12 @@ def render_view(
     )
 
     fig.savefig(
-        out_path,
+        out_dir / f"{view_name}{suffix}.png",
         dpi=100,
         facecolor=BACKGROUND,
         bbox_inches=None,
         pad_inches=0,
+        pil_kwargs={"compress_level": compress_level, "optimize": True},
     )
     plt.close(fig)
 
@@ -309,29 +326,73 @@ def render_view(
 # MAIN
 # ============================================================
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Improved orthographic DXF renderer (centered + normalized)"
     )
     parser.add_argument("input", type=Path, help="Input DXF file")
     parser.add_argument("--out", type=Path, default=None, help="Output folder")
-    parser.add_argument("--size", type=int, default=DEFAULT_SIZE, help="Image size in pixels")
+    parser.add_argument(
+        "--size", type=int, default=DEFAULT_SIZE, help="Image size in pixels"
+    )
     parser.add_argument("--max-edges", type=int, default=DEFAULT_MAX_EDGES)
-    parser.add_argument("--views", type=str, default="top,front,right",
-                        help="Comma-separated views: top,front,right,iso")
-    parser.add_argument("--max-faces", type=int, default=None,
-                        help="Limit number of faces loaded to save memory")
-    parser.add_argument("--dxf-out", type=Path, default=None,
-                        help="Export ortho views to a single DXF file")
-    parser.add_argument("--dxf-max-mb", type=float, default=None,
-                        help="Target DXF file size in MB (overrides --max-dxf-edges)")
-    parser.add_argument("--max-dxf-edges", type=int, default=200_000,
-                        help="Max edges in DXF export (ignored if --dxf-max-mb is set)")
-    parser.add_argument("--dxf-bytes-per-edge", type=int, default=600,
-                        help="Calibration: average bytes per edge in DXF (used with --dxf-max-mb)")
-    parser.add_argument("--dxf-outline", type=Path, default=None,
-                        help="Export clean outlines (closed polylines) to DXF")
+    parser.add_argument(
+        "--views",
+        type=str,
+        default="top,front,right",
+        help="Comma-separated views: top,front,right,iso",
+    )
+    parser.add_argument(
+        "--max-faces",
+        type=int,
+        default=None,
+        help="Limit number of faces loaded to save memory",
+    )
+    parser.add_argument(
+        "--dxf-out",
+        type=Path,
+        default=None,
+        help="Export ortho views to a single DXF file",
+    )
+    parser.add_argument(
+        "--dxf-max-mb",
+        type=float,
+        default=None,
+        help="Target DXF file size in MB (overrides --max-dxf-edges)",
+    )
+    parser.add_argument(
+        "--max-dxf-edges",
+        type=int,
+        default=200_000,
+        help="Max edges in DXF export (ignored if --dxf-max-mb is set)",
+    )
+    parser.add_argument(
+        "--dxf-bytes-per-edge",
+        type=int,
+        default=600,
+        help="Calibration: average bytes per edge in DXF (used with --dxf-max-mb)",
+    )
+    parser.add_argument(
+        "--dxf-outline",
+        type=Path,
+        default=None,
+        help="Export clean outlines (closed polylines) to DXF",
+    )
     parser.add_argument("--version", action="version", version="dxf-ortho 0.1.0")
+    parser.add_argument(
+        "--png-compress",
+        type=int,
+        default=6,
+        choices=range(10),
+        help="PNG compression level (0-9, default 6)",
+    )
+    parser.add_argument(
+        "--suffix",
+        type=str,
+        default=None,
+        help="Custom suffix for output PNG files (overrides auto-suffix)",
+    )
     args = parser.parse_args()
 
     input_path = args.input
@@ -355,7 +416,22 @@ def main():
     # 3. Extract edges
     full_segments = extract_edges(mesh, max_edges=args.max_edges)
 
-    # 4. Render PNGs and collect 2D data + limits
+    # 4. Render PNGs with auto-suffix, collect 2D data and define limits
+
+    ## 4.1 Build auto-suffix
+    suffix_parts = []
+    if args.png_compress != 6:
+        suffix_parts.append(f"c{args.png_compress}")
+    if args.max_edges != DEFAULT_MAX_EDGES:
+        suffix_parts.append(f"e{args.max_edges}")
+    if args.size != DEFAULT_SIZE:
+        suffix_parts.append(f"s{args.size}")
+
+    ## 4.2 Apply suffix to view names
+    auto_suffix = "_" + "_".join(suffix_parts) if suffix_parts else ""
+    suffix = args.suffix if args.suffix is not None else auto_suffix
+
+    ## 4.3 Render views
     views_segments_2d = {}
     view_limits = {}
     print(f"[*] Rendering {len(views)} view(s) at {args.size}px ...")
@@ -363,7 +439,7 @@ def main():
         seg2d = project_view(full_segments, view)
         views_segments_2d[view] = seg2d
 
-        # Compute the exact axis limits (matching render_view)
+        # Compute axis limits (matching render_view)
         all_pts = seg2d.reshape(-1, 2)
         mins = all_pts.min(axis=0)
         maxs = all_pts.max(axis=0)
@@ -374,9 +450,16 @@ def main():
         ylim = (mins[1] - pad[1], maxs[1] + pad[1])
         view_limits[view] = (xlim, ylim)
 
-        out_file = out_dir / f"{view}.png"
-        render_view(seg2d, view, out_file, image_size=args.size)
-        print(f"    → {out_file.name}")
+        # Render the view
+        render_view(
+            seg2d,
+            view,
+            out_dir,
+            image_size=args.size,
+            compress_level=args.png_compress,
+            suffix=suffix,
+        )
+        print(f"    → {view}{suffix}.png")
 
     # 5. Optional DXF export
     if args.dxf_out:
@@ -384,13 +467,17 @@ def main():
         if args.dxf_max_mb is not None:
             target_bytes = args.dxf_max_mb * 1024 * 1024
             max_dxf_edges = int(target_bytes / args.dxf_bytes_per_edge)
-            print(f"[*] Targeting ~{args.dxf_max_mb:.1f} MB DXF → {max_dxf_edges:,} edges (using {args.dxf_bytes_per_edge} bytes/edge)")
+            print(
+                f"[*] Targeting ~{args.dxf_max_mb:.1f} MB DXF → {max_dxf_edges:,} edges (using {args.dxf_bytes_per_edge} bytes/edge)"
+            )
         else:
             max_dxf_edges = args.max_dxf_edges
 
         total_edges = len(full_segments)
         if total_edges > max_dxf_edges:
-            print(f"[*] Subsampling {total_edges:,} edges → {max_dxf_edges:,} for DXF export")
+            print(
+                f"[*] Subsampling {total_edges:,} edges → {max_dxf_edges:,} for DXF export"
+            )
             rng = np.random.default_rng(42)
             idx = rng.choice(total_edges, size=max_dxf_edges, replace=False)
             reduced_segments = full_segments[idx]
@@ -399,12 +486,16 @@ def main():
 
         # Project all views for DXF using the (possibly reduced) segments
         from dxf_agent.export.ortho_dxf import export_ortho_views_to_dxf
+
         dxf_views = {view: project_view(reduced_segments, view) for view in views}
         export_ortho_views_to_dxf(dxf_views, args.dxf_out)
 
     # 6. Optional silhouette DXF
     if args.dxf_outline:
-        from dxf_agent.export.ortho_dxf import extract_contour_from_png, export_outline_dxf
+        from dxf_agent.export.ortho_dxf import (
+            export_outline_dxf,
+            extract_contour_from_png,
+        )
 
         # Compute layout offsets (reuse same logic as wireframe export)
         bboxes = {}
@@ -415,9 +506,9 @@ def main():
         def offset_bbox(bb_min, bb_max):
             return bb_max - bb_min
 
-        top_size = offset_bbox(*bboxes['top'])
-        front_size = offset_bbox(*bboxes['front'])
-        right_size = offset_bbox(*bboxes['right'])
+        top_size = offset_bbox(*bboxes["top"])
+        front_size = offset_bbox(*bboxes["front"])
+        right_size = offset_bbox(*bboxes["right"])
         spacing = 3.0
         top_offset = (0.0, 0.0)
         front_offset = (top_size[0] + spacing, 0.0)
@@ -430,10 +521,12 @@ def main():
         # Extract contours from the PNGs we just saved
         contours = {}
         for view in views:
-            png_file = out_dir / f"{view}.png"
+            png_file = out_dir / f"{view}{suffix}.png"
             contours[view] = extract_contour_from_png(png_file)
 
-        export_outline_dxf(contours, view_limits, args.size, view_offsets, args.dxf_outline)
+        export_outline_dxf(
+            contours, view_limits, args.size, view_offsets, args.dxf_outline
+        )
 
     # 7. Metadata
     meta = {
@@ -460,6 +553,7 @@ def main():
     print(f"  Edges drawn   : {len(full_segments):,}")
     print(f"  Time          : {time.time() - t0:.1f}s")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

@@ -34,7 +34,8 @@ The **DXF Agent Workbench** is an agentic-oriented, high-performance, robust ort
 * **Massive Scale Processing:** Capable of processing and rendering meshes containing millions of faces (empirically tested with over 2,000,000 faces).
 * **Intelligent Scaling:** Features automatic centering and dynamic scaling to ensure optimal framing of all geometries.
 * **Standardized Projections:** Generates clean, precise TOP, FRONT, and RIGHT orthographic views, with optional isometric projections available.
-* **High-Resolution Output:** Exports high-fidelity PNG images at arbitrary resolutions (defaulting to an ultra-crisp 3200 px).
+* **Built-in compression:** Exports compressed PNG images at arbitrary resolutions lvls 0-9 (default=6).
+* **Extended DXF Exports:** Provides the option to export simplified wireframe layouts or outline polylines into a newly generated DXF file.
 * **Extended DXF Exports:** Provides the option to export simplified wireframe layouts or outline polylines into a newly generated DXF file.
 
 ---
@@ -53,34 +54,51 @@ This workbench is developed in **Python** and leverages highly optimized librari
 
 ---
 
-## Installation Guide
+## Quickstart with dxf-ortho
 
-To configure the workbench within your local environment, please execute the following commands:
+To configure the dxf-agent-benchwork within your local environment, please execute the following commands:
 
+### Fetch and install dxf-ortho cli
 ```bash
-# Clone the repository
-git clone https://github.com/ruledicaprio/dxf-agent-workbench.git
+## navigate and clone repo
 
-# Navigate to the project directory
+git clone https://github.com/ruledicaprio/dxf-agent-workbench.git
 cd dxf-agent-workbench
 
-# (Recommended) Create and activate a virtual environment
+# create virtual environment (recommended) and install cli
+
 python -m venv venv
 source venv/bin/activate  # On Windows, use: venv\Scripts\activate
-
-# Install the required dependencies
-pip install numpy matplotlib trimesh ezdxf opencv-python
 ```
+### install dependencies
+```bash
+pip install numpy matplotlib trimesh ezdxf opencv-python
+pip install -e .
+
+```
+### operational usage (see available flags)
+```bash
+dxf-ortho examples/FG_Wilson_P_22-6-model.dxf --size 3200 --out examples/ --png-compress 9
+```
+
+
 
 ---
 
-## Operational Usage
+## Gallery
 
-*(Please adjust the following command to reflect your application's primary entry point)*
-
-```bash
-python renderer.py --input path/to/model.dxf --output path/to/output.png --view TOP --resolution 3200
-```
+<p align="center">
+  <img src="examples/top.png" width="600" alt="TOP view">
+  <br><em>TOP view</em>
+</p>
+<p align="center">
+  <img src="examples/front.png" width="600" alt="FRONT view">
+  <br><em>FRONT view</em>
+</p>
+<p align="center">
+  <img src="examples/right.png" width="600" alt="RIGHT view">
+  <br><em>RIGHT view</em>
+</p>
 
 ---
 
