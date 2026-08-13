@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "dxf-agent-workbench": {
+      "type": "stdio",
+      "command": "dxf-ortho-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}
