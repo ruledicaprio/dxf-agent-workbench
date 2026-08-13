@@ -6,7 +6,7 @@
 2. **Geometry** – canonical model (trimesh, bounds, transforms)  
 3. **Render** – orthographic / isometric projections → PNG/SVG  
 4. **Simplify** – mesh simplification (three-stage, hybrid, stream)  
-5. **Agent** – tools for Claude: inspect, snapshot, query  
+5. **Agent** – MCP server (`src/dxf_agent/mcp/server.py`, stdio transport, launched via `dxf-ortho-mcp`) exposing `render_orthographic_views` as an agent-callable tool; shares `run_pipeline()` with the CLI (see AGENTS.md)  
 
 ## Coordinate System
 

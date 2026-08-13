@@ -3,6 +3,10 @@ from pathlib import Path
 
 import requests
 
+# Experimental local-LLM chat client (talks to a llama.cpp-style /completion
+# endpoint). Disconnected from the rendering pipeline and not part of the
+# MCP/CLI agent surface documented in AGENTS.md.
+
 
 class LocalAgent:
     def __init__(self, base_url="http://127.0.0.1:8080"):

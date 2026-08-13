@@ -1,4 +1,3 @@
-@"
 # Python
 __pycache__/
 *.py[cod]
@@ -24,8 +23,6 @@ artifacts/*.dwg
 # Benchmark corpus (optional: can be kept locally)
 benchmarks/
 corpus/
-"@ | Out-File -Encoding utf8 .gitignore
-corpus/
 output/
 artifacts/
 benchmark_results/
@@ -36,3 +33,6 @@ benchmark_results/
 *.dxf
 sample_output/
 sample_output/
+
+# Accidental nested clone of this same repo
+scripts/dxf-agent-workbench/

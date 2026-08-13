@@ -18,8 +18,12 @@ dependencies = [
     "opencv-python>=4.5.0",
 ]
 
+[project.optional-dependencies]
+mcp = ["mcp>=1.0.0"]
+
 [project.scripts]
 dxf-ortho = "dxf_agent.export.orthographic:main"
+dxf-ortho-mcp = "dxf_agent.mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
