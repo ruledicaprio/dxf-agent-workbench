@@ -121,8 +121,13 @@ def load_dxf_as_mesh(path: Path, max_faces: int | None = None) -> trimesh.Trimes
                     ],
                     dtype=np.float64,
                 )
-                # Check if last is duplicate
-                if np.allclose(pts[0], pts[3]):
+                # A triangular 3DFACE is stored as a quad whose fourth corner
+                # repeats the third (DXF R12 convention); some writers close the
+                # loop with the first instead. Either spelling describes ONE
+                # triangle. Testing only pts[0] missed the common case, so every
+                # triangular face was split into a real triangle plus a zero-area
+                # partner — on a 1.99M-face model, 998,375 degenerate faces.
+                if np.allclose(pts[3], pts[2]) or np.allclose(pts[3], pts[0]):
                     tri = pts[:3]
                     base = len(vertices)
                     vertices.extend(tri)
